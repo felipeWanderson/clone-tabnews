@@ -5,11 +5,14 @@
   "repository": "git@github.com:felipeWanderson/clone-tabnews.git",
   "author": "Felipe Leal <felipewanderson2020@gmail.com>",
   "scripts": {
-    "dev": "next dev",
+    "dev": "npm run services:up && next dev",
     "lint:check": "prettier --check .",
     "lint:fix": "prettier --write .",
     "test": "jest",
-    "test:watch": "jest --watchAll"
+    "test:watch": "jest --watchAll",
+    "services:up": "docker compose -f infra/compose.yaml up -d",
+    "services:stop": "docker compose -f infra/compose.yaml stop",
+    "services:down": "docker compose -f infra/compose.yaml down"
   },
   "license": "MIT",
   "dependencies": {
