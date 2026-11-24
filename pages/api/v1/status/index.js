@@ -1,38 +1,32 @@
+import { createRouter } from "next-connect";
 import database from "infra/database.js";
-import { InternalServerError } from "infra/erros.js";
+import controller from "infra/controller";
+const router = createRouter();
 
-async function status(request, response) {
-  try {
-    const updatedAt = new Date().toISOString();
-    const resultServerVersion = await database.query("SHOW server_version;");
-    const postgresVersion = resultServerVersion.rows[0].server_version;
-    const resultMaxConnections = await database.query("SHOW max_connections;");
-    const maxConnections = resultMaxConnections.rows[0].max_connections;
+router.get(getHandler);
 
-    const databaseName = process.env.POSTGRES_DATABASE;
-    const resultMaxUsedConnections = await database.query({
-      text: "SELECT count(*)::int FROM pg_stat_activity WHERE datname = $1",
-      values: [databaseName],
-    });
+export default router.handler(controller.errorHandlers);
 
-    const maxUsedConnections = resultMaxUsedConnections.rows[0].count;
-    return response.status(200).json({
-      updated_at: updatedAt,
-      database: {
-        postgres_version: postgresVersion,
-        max_connections: Number(maxConnections),
-        max_used_connections: maxUsedConnections,
-      },
-    });
-  } catch (error) {
-    const publicErrorObject = new InternalServerError({
-      cause: error,
-    });
-    console.log("\n Erro dentro do catch do controller: ");
-    console.log(publicErrorObject);
+async function getHandler(request, response) {
+  const updatedAt = new Date().toISOString();
+  const resultServerVersion = await database.query("SHOW server_version;");
+  const postgresVersion = resultServerVersion.rows[0].server_version;
+  const resultMaxConnections = await database.query("SHOW max_connections;");
+  const maxConnections = resultMaxConnections.rows[0].max_connections;
 
-    response.status(500).json(publicErrorObject);
-  }
+  const databaseName = process.env.POSTGRES_DATABASE;
+  const resultMaxUsedConnections = await database.query({
+    text: "SELECT count(*)::int FROM pg_stat_activity WHERE datname = $1",
+    values: [databaseName],
+  });
+
+  const maxUsedConnections = resultMaxUsedConnections.rows[0].count;
+  return response.status(200).json({
+    updated_at: updatedAt,
+    database: {
+      postgres_version: postgresVersion,
+      max_connections: Number(maxConnections),
+      max_used_connections: maxUsedConnections,
+    },
+  });
 }
-
-export default status;
